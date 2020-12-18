@@ -63,7 +63,7 @@ def getNormalisedCoordinates(contours):
 		y_new = x[i]*math.sin(theta) + y[i]*math.cos(theta)
 		x[i], y[i] = round(x_new, 2), round(y_new, 2)
 
-	return x, y
+	return np.array(x), np.array(y)
 
 # Finding edges using Canny edge detection
 def findEdges(image, thresh1, thresh2):
@@ -169,12 +169,10 @@ def makeTemplates():
 		# return x, y
 	
 	# Save the normalised coordinates for all templates
-	# with open("Template Coordinates", "wb") as fp:
-	# 	pickle.dump(templates_coordinates, fp)
-	
+	with open("Template Coordinates", "wb") as fp:
+		pickle.dump(templates_coordinates, fp)
 
-
-if __name__ == "__main__":
+def test():
 
 	# Process and find the normalised coordinate for each template present in the Templates directory
 	# makeTemplates()
@@ -218,8 +216,9 @@ if __name__ == "__main__":
 	plt.scatter(x, y)
 	plt.show()
 
-	template_x, template_y = dodo()
+	return x , y
 
+def score(x , y , template_x , template_y) :
 	test_coordinates = {}
 	template_coordinates = {}
 	
@@ -272,3 +271,31 @@ if __name__ == "__main__":
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
+
+def simillarity_error(train ,test):
+	threshold = 0.05
+	error = 0
+	count = 0
+	for i in range(train[0].shape[0]) :
+		distances = np.sqrt((test[0] - train[0][i]) **2 + (test[1] - train[1][i]) **2)
+		min_dist = min(distances)
+		if(min_dist < threshold) :
+			count += 1
+			error += min_dist
+
+	return count , error
+
+
+if __name__ == "__main__":
+	x_test , y_test = test()
+
+	file = open('Template Coordinates' , 'rb')
+	template_coordinate = pickle.load(file)
+
+	x_template , y_template = template_coordinate['Gemini']
+
+	# x_template , y_template = np.array(x_template) , np.array(y_template)
+
+	e = simillarity_error((x_template, y_template) , (x_test , y_test))
+	score(x_test , y_test , x_template , y_template)
+	print(e)
