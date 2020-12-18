@@ -16,10 +16,10 @@ def getNormalisedCoordinates(x, y, brightest_index, second_brightest_index, line
 	
 	for line in lines:
 		for x1,y1,x2,y2 in line:
-			x1-= x[0]
-			y1 -= y[0]
-			x2 -= x[0]
-			y2 -= y[0]
+			x1-= x[brightest_index]
+			y1 -= y[brightest_index]
+			x2 -= x[brightest_index]
+			y2 -= y[brightest_index]
 			line[0][0] = x1
 			line[0][1] = y1
 			line[0][2] = x2
@@ -27,12 +27,12 @@ def getNormalisedCoordinates(x, y, brightest_index, second_brightest_index, line
 
 	# Shifting the brightest star to origin
 	for i in range(len(x)):
-		x[len(x)-i-1] -= x[0]
-		y[len(x)-i-1] -= y[0]
+		x[len(x)-i-1] -= x[brightest_index]
+		y[len(x)-i-1] -= y[brightest_index]
 
 
 	# Distance between brightest and second brightest star
-	distance_brightest = math.sqrt((x[0]-x[1])**2 + (y[0]-y[1])**2)
+	distance_brightest = math.sqrt((x[brightest_index]-x[second_brightest_index])**2 + (y[brightest_index]-y[second_brightest_index])**2)
 
 	# Normalising the distance between all stars
 	for i in range(len(x)):
@@ -41,11 +41,11 @@ def getNormalisedCoordinates(x, y, brightest_index, second_brightest_index, line
 	lines = lines/distance_brightest
 
 	# Finding the angle of rotation to rotate second brightest star to (1, 0)
-	p0 = (x[0], y[0])
-	p1 = (x[1], y[1])
+	p0 = (x[brightest_index], y[brightest_index])
+	p1 = (x[second_brightest_index], y[second_brightest_index])
 	p2 = (1, 0)
 	theta = getAngle(p0, p1, p2)
-	if round(x[1]*math.cos(theta) - y[1]*math.sin(theta), 2) != float(1) or round(x[1]*math.sin(theta) + y[1]*math.cos(theta), 2) != float(0):
+	if round(x[second_brightest_index]*math.cos(theta) - y[second_brightest_index]*math.sin(theta), 2) != float(1) or round(x[second_brightest_index]*math.sin(theta) + y[second_brightest_index]*math.cos(theta), 2) != float(0):
 		theta = -theta
 
 	# Updating the new coordinates of each star
@@ -389,8 +389,9 @@ def simillarity_error(train ,test):
 	return count , error
 
 def test_runner(constellation) : 
-	# constellation = 'Andromeda'
+	constellation = 'Andromeda'
 	test_coordinates = test_normaliser('test_data/' + constellation + '.png')
+	print(test_coordinates)
 	# print(len(test_coordinates) , test_coordinates)
 
 	file = open('Template Coordinates' , 'rb')
