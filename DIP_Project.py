@@ -89,7 +89,7 @@ def getNormalisedCoordinates(contours, lines=None):
 			line[0][1] = y1_new
 			line[0][2] = x2_new
 			line[0][3] = y2_new
-			
+
 	return np.array(x), np.array(y)
 
 # Finding edges using Canny edge detection
@@ -254,7 +254,7 @@ def makeTemplates():
 def test():
 
 	# Process and find the normalised coordinate for each template present in the Templates directory
-	makeTemplates()
+	# makeTemplates()
 
 	img = cv2.imread("test.png")
 	img = getGrayscale(img)
@@ -265,7 +265,7 @@ def test():
 	# Subtracting to get only stars
 	final = thresh[0]
 	plotImage(final, "final")
-
+	cv2.imwrite("./final.png", final)
 	stars = applyMedian(final, 5)
 	# plotImage(stars, "stars")
 
@@ -273,7 +273,7 @@ def test():
 	# final_stars = binariseImage(stars, [70])
 	# final_stars_inverted = invertImage(final_stars[0])
 	final_stars_inverted = invertImage(stars)
-	# plotImage(final_stars[0], "final stars")
+	plotImage(final_stars[0], "final stars")
 
 	edged = findEdges(final_stars_inverted, 30, 200)
 	plotImage(edged, "edges")
