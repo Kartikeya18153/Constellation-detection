@@ -10,7 +10,7 @@ def dist(p1, p2):
 def getAngle(p0, p1, p2):
 	return math.acos((dist(p0, p1)**2 + dist(p0, p2)**2 - dist(p1, p2)**2)/(2*(dist(p0, p1)**2)*(dist(p0, p2)**2)))
 
-def getNormalisedCoordinates(contours, lines=None):
+def getNormalisedCoordinates(contours, lines=[]):
 
 	lines = np.array(lines)
 
@@ -90,7 +90,7 @@ def getNormalisedCoordinates(contours, lines=None):
 			line[0][2] = x2_new
 			line[0][3] = y2_new
 			
-	return np.array(x), np.array(y)
+	return np.array(x), np.array(y), lines
 
 # Finding edges using Canny edge detection
 def findEdges(image, thresh1, thresh2):
@@ -254,7 +254,7 @@ def makeTemplates():
 def test(test_path):
 
 	# Process and find the normalised coordinate for each template present in the Templates directory
-	makeTemplates()
+	# makeTemplates()
 
 	img = cv2.imread(test_path)
 	img = getGrayscale(img)
@@ -289,7 +289,7 @@ def test(test_path):
 
 	print("Number of Contours found = " + str(len(final_contours)))
 
-	x, y = getNormalisedCoordinates(final_contours)
+	x, y , _ = getNormalisedCoordinates(final_contours)
 
 	plt.figure("Normalised stars")
 	plt.scatter(x, y)
