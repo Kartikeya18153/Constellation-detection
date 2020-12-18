@@ -230,7 +230,7 @@ def makeTemplates():
 
 		x, y, normalised_lines = getNormalisedCoordinates(final_contours, drawn_lines)
 
-		templates_coordinates[filename[:-4]] = (x, y)
+		templates_coordinates[filename[:-4]] = (x, y, len(final_contours))
 
 		# Plot the normalised stars or save them
 		plt.figure("Normalised " + filename[:-4] + " stars")
@@ -241,7 +241,7 @@ def makeTemplates():
 
 		# plt.savefig("./Normalised_Templates/" + filename)
 		# plt.close()
-		plt.show()
+		# plt.show()
 		# exit()
 
 		# Return the normalised coordinates 
