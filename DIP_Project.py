@@ -10,7 +10,10 @@ def dist(p1, p2):
 def getAngle(p0, p1, p2):
 	return math.acos((dist(p0, p1)**2 + dist(p0, p2)**2 - dist(p1, p2)**2)/(2*(dist(p0, p1)**2)*(dist(p0, p2)**2)))
 
-def getNormalisedCoordinates(contours):
+def getNormalisedCoordinates(contours, lines=None):
+
+	lines = np.array(lines)
+
 	# Finding the coordinates of the contours and their area
 	coordinates = {}
 	for i in range(len(contours)):
@@ -24,7 +27,7 @@ def getNormalisedCoordinates(contours):
 			coordinates[area+0.0001] = (cx, cy)
 		else:
 			coordinates[area] = (cx, cy)
-
+		
 	sorted_area = []
 	for i in reversed(sorted(coordinates.keys())):  
 		sorted_area.append(i)
@@ -35,11 +38,23 @@ def getNormalisedCoordinates(contours):
 	for area in sorted_area:
 		x.append(coordinates[area][0])
 		y.append(coordinates[area][1])
+	
+	for line in lines:
+		for x1,y1,x2,y2 in line:
+			x1-= x[0]
+			y1 -= y[0]
+			x2 -= x[0]
+			y2 -= y[0]
+			line[0][0] = x1
+			line[0][1] = y1
+			line[0][2] = x2
+			line[0][3] = y2
 
 	# Shifting the brightest star to origin
 	for i in range(len(x)):
 		x[len(x)-i-1] -= x[0]
 		y[len(x)-i-1] -= y[0]
+
 
 	# Distance between brightest and second brightest star
 	distance_brightest = math.sqrt((x[0]-x[1])**2 + (y[0]-y[1])**2)
@@ -48,6 +63,7 @@ def getNormalisedCoordinates(contours):
 	for i in range(len(x)):
 		x[i] = x[i]/distance_brightest
 		y[i] = y[i]/distance_brightest
+	lines = lines/distance_brightest
 
 	# Finding the angle of rotation to rotate second brightest star to (1, 0)
 	p0 = (x[0], y[0])
@@ -63,7 +79,19 @@ def getNormalisedCoordinates(contours):
 		y_new = x[i]*math.sin(theta) + y[i]*math.cos(theta)
 		x[i], y[i] = round(x_new, 2), round(y_new, 2)
 
-	return x, y
+	for line in lines:
+		for x1,y1,x2,y2 in line:
+			x1_new = x1*math.cos(theta) - y1*math.sin(theta)
+			y1_new = x1*math.sin(theta) + y1*math.cos(theta)
+			x2_new = x2*math.cos(theta) - y2*math.sin(theta)
+			y2_new = x2*math.sin(theta) + y2*math.cos(theta)
+			line[0][0] = x1_new
+			line[0][1] = y1_new
+			line[0][2] = x2_new
+			line[0][3] = y2_new
+			
+
+	return x, y, lines
 
 # Finding edges using Canny edge detection
 def findEdges(image, thresh1, thresh2):
@@ -94,11 +122,23 @@ def binariseImage(img, thresholds):
 
 	return output_thresh
 
+def getGreenChannel(img):
+
+	image_copy_green = img.copy()
+	# Setting Green and Red channel 0
+	image_copy_green[:, :, 0] = 0
+	image_copy_green[:, :, 2] = 0
+	return image_copy_green
+
+def getBlueChannel(img):
+	
+	image_copy_blue = img.copy()
+	# Setting Green and Red channel 0
+	image_copy_blue[:, :, 1] = 0
+	image_copy_blue[:, :, 2] = 0
+	return image_copy_blue
+
 def getRedChannel(img):
-	# image_copy_blue = img.copy()
-	# # Setting Green and Red channel 0
-	# image_copy_blue[:, :, 1] = 0
-	# image_copy_blue[:, :, 2] = 0
 
 	# Setting Green and Blue channel 0
 	image_copy = img.copy()
@@ -114,6 +154,7 @@ def makeTemplates():
 
 	# Iterate through each file in the template directory to process one template at a time
 	for filename in os.listdir(template_directory):
+	# for filename in ["Hercules.png"]:
 		print(filename)
 
 		# Reading the template 
@@ -123,21 +164,54 @@ def makeTemplates():
 		# plotImage(red_channel, "red")
 		thresh = binariseImage(red_channel, [165.75, 191.25])
 
+		blue_channel = getBlueChannel(img)
+
+		thresh2 = binariseImage(red_channel, [125.75, 255])
+		letters = thresh2[0] - thresh2[1]
+		new_blue = blue_channel + letters
+
+		for i in range(len(new_blue)):
+			for j in range(len(new_blue[i])):
+				if new_blue[i][j][2] != 0:
+					new_blue[i][j][1] = 0
+					new_blue[i][j][0] = 0
+					new_blue[i][j][2] = 0
+
 		# Subtracting to get only stars
 		final = thresh[0] - thresh[1]
 		# plotImage(final, "final")
 
 		stars = applyMedian(final, 3)
-		# plotImage(stars, "stars")
+		lines = applyMedian(new_blue, 3)
 
 		stars_grey = getGrayscale(stars)
+		lines_grey = getGrayscale(lines)
 		final_stars = binariseImage(stars_grey, [20])
+		final_lines = binariseImage(lines_grey, [5])
 		final_stars_inverted = invertImage(final_stars[0])
-		# plotImage(final_stars[0], "final stars")
+		final_lines_inverted = invertImage(final_lines[0])
+		final_lines = applyMedian(final_lines[0], 3)  
 
 		edged = findEdges(final_stars_inverted, 30, 200)
 		# plotImage(edged, "edges")
 		# cv2.waitKey(0)  
+
+		rho = 1  # distance resolution in pixels of the Hough grid
+		theta = np.pi / 180  # angular resolution in radians of the Hough grid
+		threshold = 10  # minimum number of votes (intersections in Hough grid cell)
+		min_line_length = 2  # minimum number of pixels making up a line
+		max_line_gap = 3  # maximum gap in pixels between connectable line segments
+		line_image = np.copy(img) * 0  # creating a blank to draw lines on
+
+		# Run Hough on edge detected image
+		# Output "lines" is an array containing endpoints of detected line segments
+		drawn_lines = cv2.HoughLinesP(final_lines, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
+		# drawn_lines = drawn_lines[1:]
+		for line in drawn_lines:
+			for x1,y1,x2,y2 in line:
+				cv2.line(line_image,(x1,y1),(x2,y2),(255,0,0),5)
+		# cv2.imshow("drawn", line_image)
+		# cv2.waitKey(0)
 
 		# Finding the contours in the image
 		edge_copy = edged.copy()
@@ -148,22 +222,28 @@ def makeTemplates():
 			area = cv2.contourArea(contour)
 			if area != 0:
 				final_contours.append(contour)
-
+		
 		print("Number of Contours found = " + str(len(final_contours)))
 		# cv2.drawContours(img, contours, -1, (0, 255, 0), 3) 
 		# cv2.imshow('Contours', img) 
 		# cv2.waitKey(0) 
 		# cv2.destroyAllWindows()
 
-		x, y = getNormalisedCoordinates(final_contours)
+		x, y, normalised_lines = getNormalisedCoordinates(final_contours, drawn_lines)
 
 		templates_coordinates[filename[:-4]] = (x, y)
 
 		# Plot the normalised stars or save them
-		# plt.figure("Normalised" + filename[:-4] + "stars")
-		# plt.scatter(x, y)
+		plt.figure("Normalised " + filename[:-4] + " stars")
+		plt.scatter(x, y)
+		for line in normalised_lines:
+			for x1,y1,x2,y2 in line:
+				plt.plot([x1, x2], [y1, y2], color='red')
+
 		# plt.savefig("./Normalised_Templates/" + filename)
 		# plt.close()
+		plt.show()
+		# exit()
 
 		# Return the normalised coordinates 
 		# return x, y
@@ -177,7 +257,7 @@ def makeTemplates():
 if __name__ == "__main__":
 
 	# Process and find the normalised coordinate for each template present in the Templates directory
-	# makeTemplates()
+	makeTemplates()
 
 	img = cv2.imread("test.png")
 	img = getGrayscale(img)
