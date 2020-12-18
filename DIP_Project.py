@@ -10,7 +10,7 @@ def dist(p1, p2):
 def getAngle(p0, p1, p2):
 	return math.acos((dist(p0, p1)**2 + dist(p0, p2)**2 - dist(p1, p2)**2)/(2*(dist(p0, p1)**2)*(dist(p0, p2)**2)))
 
-def getNormalisedCoordinates(contours, lines=None):
+def getNormalisedCoordinates(contours, lines=[]):
 
 	lines = np.array(lines)
 
@@ -89,8 +89,8 @@ def getNormalisedCoordinates(contours, lines=None):
 			line[0][1] = y1_new
 			line[0][2] = x2_new
 			line[0][3] = y2_new
-
-	return np.array(x), np.array(y)
+			
+	return np.array(x), np.array(y), lines
 
 # Finding edges using Canny edge detection
 def findEdges(image, thresh1, thresh2):
@@ -251,12 +251,12 @@ def makeTemplates():
 	with open("Template Coordinates", "wb") as fp:
 		pickle.dump(templates_coordinates, fp)
 
-def test():
+def test(test_path):
 
 	# Process and find the normalised coordinate for each template present in the Templates directory
 	# makeTemplates()
 
-	img = cv2.imread("test.png")
+	img = cv2.imread(test_path)
 	img = getGrayscale(img)
 	cv2.imshow('test_img' ,img)
 
@@ -289,11 +289,11 @@ def test():
 
 	print("Number of Contours found = " + str(len(final_contours)))
 
-	x, y = getNormalisedCoordinates(final_contours)
+	x, y , _ = getNormalisedCoordinates(final_contours)
 
 	plt.figure("Normalised stars")
 	plt.scatter(x, y)
-	plt.show()
+	# plt.show()
 
 	return x , y
 
@@ -366,15 +366,19 @@ def simillarity_error(train ,test):
 
 
 if __name__ == "__main__":
-	x_test , y_test = test()
+	constellation = 'Cetus'
+	x_test , y_test = test('test_data/' + constellation + '.png')
 
 	file = open('Template Coordinates' , 'rb')
 	template_coordinate = pickle.load(file)
 
-	x_template , y_template = template_coordinate['Gemini']
+	x_template , y_template = template_coordinate[constellation]
 
-	# x_template , y_template = np.array(x_template) , np.array(y_template)
+	plt.figure('Template')
+
+	plt.scatter(x_template, y_template)
+	plt.show()
 
 	e = simillarity_error((x_template, y_template) , (x_test , y_test))
-	score(x_test , y_test , x_template , y_template)
+	# score(x_test , y_test , x_template , y_template)
 	print(e)
