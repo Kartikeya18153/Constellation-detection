@@ -172,12 +172,12 @@ def makeTemplates():
 	with open("Template Coordinates", "wb") as fp:
 		pickle.dump(templates_coordinates, fp)
 
-def test():
+def test(test_path):
 
 	# Process and find the normalised coordinate for each template present in the Templates directory
 	# makeTemplates()
 
-	img = cv2.imread("test.png")
+	img = cv2.imread(test_path)
 	img = getGrayscale(img)
 	cv2.imshow('test_img' ,img)
 
@@ -214,7 +214,7 @@ def test():
 
 	plt.figure("Normalised stars")
 	plt.scatter(x, y)
-	plt.show()
+	# plt.show()
 
 	return x , y
 
@@ -287,15 +287,19 @@ def simillarity_error(train ,test):
 
 
 if __name__ == "__main__":
-	x_test , y_test = test()
+	constellation = 'Cetus'
+	x_test , y_test = test('test_data/' + constellation + '.png')
 
 	file = open('Template Coordinates' , 'rb')
 	template_coordinate = pickle.load(file)
 
-	x_template , y_template = template_coordinate['Gemini']
+	x_template , y_template = template_coordinate[constellation]
 
-	# x_template , y_template = np.array(x_template) , np.array(y_template)
+	plt.figure('Template')
+
+	plt.scatter(x_template, y_template)
+	plt.show()
 
 	e = simillarity_error((x_template, y_template) , (x_test , y_test))
-	score(x_test , y_test , x_template , y_template)
+	# score(x_test , y_test , x_template , y_template)
 	print(e)
