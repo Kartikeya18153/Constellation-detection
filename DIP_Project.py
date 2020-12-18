@@ -254,7 +254,7 @@ def makeTemplates():
 def test(test_path):
 
 	# Process and find the normalised coordinate for each template present in the Templates directory
-	# makeTemplates()
+	makeTemplates()
 
 	img = cv2.imread(test_path)
 	img = getGrayscale(img)
@@ -273,7 +273,7 @@ def test(test_path):
 	# final_stars = binariseImage(stars, [70])
 	# final_stars_inverted = invertImage(final_stars[0])
 	final_stars_inverted = invertImage(stars)
-	plotImage(final_stars[0], "final stars")
+	# plotImage(final_stars[0], "final stars")
 
 	edged = findEdges(final_stars_inverted, 30, 200)
 	plotImage(edged, "edges")
