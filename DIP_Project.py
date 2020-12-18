@@ -96,15 +96,15 @@ def iterateArea(contours, lines=[], iterate=False):
 		x.append(coordinates[area][0])
 		y.append(coordinates[area][1])
 
-	threshold = 200
-	print(sorted_area)
+	threshold = 130
+	# print(sorted_area)
 	count = 0
 	for area in sorted_area:
 		if area >= threshold:
 			count += 1
 
 	coordinates_list = []
-	print(count)
+	# print(count)
 	if iterate == False:
 		return getNormalisedCoordinates(x, y, 0, 1, lines)
 	else:
@@ -273,7 +273,7 @@ def makeTemplates():
 	with open("Template Coordinates", "wb") as fp:
 		pickle.dump(templates_coordinates, fp)
 
-def test(test_path):
+def test_normaliser(test_path):
 
 	# Process and find the normalised coordinate for each template present in the Templates directory
 	# makeTemplates()
@@ -287,7 +287,7 @@ def test(test_path):
 	# Subtracting to get only stars
 	final = thresh[0]
 	plotImage(final, "final")
-	cv2.imwrite("./final.png", final)
+	# cv2.imwrite("./final.png", final)
 	stars = applyMedian(final, 5)
 	# plotImage(stars, "stars")
 
@@ -311,15 +311,15 @@ def test(test_path):
 
 	print("Number of Contours found = " + str(len(final_contours)))
 
-	coordinates_list = iterateArea(final_contours, [], True)
-	print(coordinates_list)
-	exit()
+	coordinates_list = iterateArea(final_contours, [] , True)
+	# print(coordinates_list)
+	# exit()
 
-	plt.figure("Normalised stars")
-	plt.scatter(x, y)
+	# plt.figure("Normalised stars")
+	# plt.scatter(x, y)
 	# plt.show()
 
-	return x , y
+	return coordinates_list
 
 def score(x , y , template_x , template_y) :
 	test_coordinates = {}
@@ -377,7 +377,7 @@ def score(x , y , template_x , template_y) :
 
 def simillarity_error(train ,test):
 	threshold = 0.05
-	error = 0
+	error = 1e-100
 	count = 0
 	for i in range(train[0].shape[0]) :
 		distances = np.sqrt((test[0] - train[0][i]) **2 + (test[1] - train[1][i]) **2)
@@ -388,21 +388,39 @@ def simillarity_error(train ,test):
 
 	return count , error
 
-
-if __name__ == "__main__":
-	constellation = 'Cetus'
-	x_test , y_test = test('test_data/' + constellation + '.png')
+def test_runner(constellation) : 
+	# constellation = 'Andromeda'
+	test_coordinates = test_normaliser('test_data/' + constellation + '.png')
+	# print(len(test_coordinates) , test_coordinates)
 
 	file = open('Template Coordinates' , 'rb')
 	template_coordinate = pickle.load(file)
 
-	x_template , y_template = template_coordinate[constellation]
+	score = -1
+	pred_label = 'None'
 
-	plt.figure('Template')
+	for bright_perm in range(len(test_coordinates)) :
+		for constellation in template_coordinate :
+			x_template , y_template , n_stars = template_coordinate[constellation]
 
-	plt.scatter(x_template, y_template)
-	plt.show()
+			e = simillarity_error((x_template, y_template) , test_coordinates[bright_perm])
+			# score(x_test , y_test , x_template , y_template)
+			cur_score = e[0] * (e[0]-2) / (n_stars * e[1])
+			# print(constellation , e , n_stars , cur_score , e[1] / (e[0]-2))
 
-	e = simillarity_error((x_template, y_template) , (x_test , y_test))
-	# score(x_test , y_test , x_template , y_template)
-	print(e)
+			if e[0] > 2 and score < cur_score :
+				pred_label = constellation
+				score = cur_score
+
+	# # plt.figure('Template')
+	# plt.scatter(x_template, y_template)
+	# plt.show()
+	# print('--------------------'*2 , '\n' , pred_label)
+	return pred_label
+
+
+if __name__ == "__main__":
+	d = ['Andromeda' , 'Aquila' , 'Capricornus' , 'Cetus' , 'Gemini' , 'Grus' , 'Pavo' , 'Pegasus' , 'Phoenix' , 'Pisces' , 'PiscisAustrinus' , 'Puppis' , 'UrsaMajor' , 'UrsaMinor' , 'Vela']
+	for i in d :
+		if (test_runner(i) == i) :
+			print(i)
