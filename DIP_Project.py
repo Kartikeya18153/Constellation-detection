@@ -10,34 +10,9 @@ def dist(p1, p2):
 def getAngle(p0, p1, p2):
 	return math.acos((dist(p0, p1)**2 + dist(p0, p2)**2 - dist(p1, p2)**2)/(2*(dist(p0, p1)**2)*(dist(p0, p2)**2)))
 
-def getNormalisedCoordinates(contours, lines=[]):
+def getNormalisedCoordinates(x, y, brightest_index, second_brightest_index, lines=[]):
 
 	lines = np.array(lines)
-
-	# Finding the coordinates of the contours and their area
-	coordinates = {}
-	for i in range(len(contours)):
-		cnt = contours[i]
-		M = cv2.moments(cnt)
-		# print(M)
-		cx = int(M['m10']/M['m00'])
-		cy = int(M['m01']/M['m00'])
-		area = cv2.contourArea(cnt)
-		if area in coordinates:
-			coordinates[area+0.0001] = (cx, cy)
-		else:
-			coordinates[area] = (cx, cy)
-		
-	sorted_area = []
-	for i in reversed(sorted(coordinates.keys())):  
-		sorted_area.append(i)
-
-	# Creating coordinates for each star in the costellation
-	x = []
-	y = []
-	for area in sorted_area:
-		x.append(coordinates[area][0])
-		y.append(coordinates[area][1])
 	
 	for line in lines:
 		for x1,y1,x2,y2 in line:
@@ -91,6 +66,53 @@ def getNormalisedCoordinates(contours, lines=[]):
 			line[0][3] = y2_new
 			
 	return np.array(x), np.array(y), lines
+
+def iterateArea(contours, lines=[], iterate=False):
+
+	lines = np.array(lines)
+
+	# Finding the coordinates of the contours and their area
+	coordinates = {}
+	for i in range(len(contours)):
+		cnt = contours[i]
+		M = cv2.moments(cnt)
+		# print(M)
+		cx = int(M['m10']/M['m00'])
+		cy = int(M['m01']/M['m00'])
+		area = cv2.contourArea(cnt)
+		if area in coordinates:
+			coordinates[area+0.0001] = (cx, cy)
+		else:
+			coordinates[area] = (cx, cy)
+		
+	sorted_area = []
+	for i in reversed(sorted(coordinates.keys())):  
+		sorted_area.append(i)
+
+	# Creating coordinates for each star in the costellation
+	x = []
+	y = []
+	for area in sorted_area:
+		x.append(coordinates[area][0])
+		y.append(coordinates[area][1])
+
+	threshold = 200
+	print(sorted_area)
+	count = 0
+	for area in sorted_area:
+		if area >= threshold:
+			count += 1
+
+	coordinates_list = []
+	print(count)
+	if iterate == False:
+		return getNormalisedCoordinates(x, y, 0, 1, lines)
+	else:
+		for i in range(count):
+			for j in range(i+1, count):
+				x, y, _ = getNormalisedCoordinates(x[i:], y[i:], i, j, lines)
+			coordinates_list.append((x, y))
+		return coordinates_list
 
 # Finding edges using Canny edge detection
 def findEdges(image, thresh1, thresh2):
@@ -228,7 +250,7 @@ def makeTemplates():
 		# cv2.waitKey(0) 
 		# cv2.destroyAllWindows()
 
-		x, y, normalised_lines = getNormalisedCoordinates(final_contours, drawn_lines)
+		x, y, normalised_lines = iterateArea(final_contours, drawn_lines)
 
 		templates_coordinates[filename[:-4]] = (x, y, len(final_contours))
 
@@ -254,7 +276,7 @@ def makeTemplates():
 def test(test_path):
 
 	# Process and find the normalised coordinate for each template present in the Templates directory
-	makeTemplates()
+	# makeTemplates()
 
 	img = cv2.imread(test_path)
 	img = getGrayscale(img)
@@ -289,7 +311,9 @@ def test(test_path):
 
 	print("Number of Contours found = " + str(len(final_contours)))
 
-	x, y , _ = getNormalisedCoordinates(final_contours)
+	coordinates_list = iterateArea(final_contours, [], True)
+	print(coordinates_list)
+	exit()
 
 	plt.figure("Normalised stars")
 	plt.scatter(x, y)
