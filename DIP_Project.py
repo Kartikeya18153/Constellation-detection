@@ -8,12 +8,13 @@ def dist(p1, p2):
 def getAngle(p0, p1, p2):
 	return math.acos((dist(p0, p1)**2 + dist(p0, p2)**2 - dist(p1, p2)**2)/(2*(dist(p0, p1)**2)*(dist(p0, p2)**2)))
 
-def getNormalisedCoordinates(contour):
+def getNormalisedCoordinates(contours):
 	# Finding the coordinates of the contours and their area
 	coordinates = {}
 	for i in range(len(contours)):
 		cnt = contours[i]
 		M = cv2.moments(cnt)
+		# print(M)
 		cx = int(M['m10']/M['m00'])
 		cy = int(M['m01']/M['m00'])
 		area = cv2.contourArea(cnt)
@@ -139,6 +140,8 @@ def dodo():
 
 	x, y = getNormalisedCoordinates(contours)
 
+	return x, y
+
 	plt.figure("Normalised stars")
 	plt.scatter(x, y)
 	plt.show()
@@ -170,13 +173,71 @@ if __name__ == "__main__":
 	edge_copy = edged.copy()
 	contours, hierarchy = cv2.findContours(edge_copy, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE) 
 
-	print("Number of Contours found = " + str(len(contours)))
+	final_contours = []
+	for contour in contours:
+		area = cv2.contourArea(contour)
+		if area != 0:
+			final_contours.append(contour)
 
-	# x, y = getNormalisedCoordinates(contours)
+	print("Number of Contours found = " + str(len(final_contours)))
+
+	x, y = getNormalisedCoordinates(final_contours)
 
 	# plt.figure("Normalised stars")
 	# plt.scatter(x, y)
 	# plt.show()
+
+	template_x, template_y = dodo()
+
+	test_coordinates = {}
+	template_coordinates = {}
+	
+	for i in range(len(x)):
+		test_coordinates[x[i]] = y[i]
+
+	for i in range(len(template_x)):
+		template_coordinates[template_x[i]] = template_y[i]
+
+	sorted_x = []
+	sorted_y = []
+	sorted_template_x = []
+	sorted_template_y = []
+
+	for i in sorted(test_coordinates.keys()):
+		sorted_x.append(i)
+		sorted_y.append(test_coordinates[i])
+	
+	for i in sorted(template_coordinates.keys()):
+		sorted_template_x.append(i)
+		sorted_template_y.append(template_coordinates[i])
+	
+	print(sorted_template_x)
+	print(sorted_template_y)
+	print("test")
+	print(sorted_x)
+	print(sorted_y)
+	
+	index_test = 0
+	index_template = 0
+
+	count = 0
+	matched_coord = []
+
+	while index_test < len(sorted_x):
+		check_x = sorted_template_x[index_template]
+		check_y = sorted_template_y[index_template]
+		
+		if sorted_x[index_test] <= check_x + 0.05 and sorted_x[index_test] >= check_x - 0.05 and sorted_y[index_test] <= check_y + 0.05 and sorted_y[index_test] >= check_y - 0.05:
+			count += 1
+			index_template += 1
+			matched_coord.append((sorted_x[index_test], sorted_y[index_test]))
+		
+		elif sorted_x[index_test] > check_x:
+			index_template += 1
+
+		index_test += 1
+	print(count)
+	print(matched_coord)
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
