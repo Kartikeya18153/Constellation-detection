@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import math
 import os
 import pickle
+import copy
 
 def dist(p1, p2):
 	return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
@@ -12,11 +13,14 @@ def getAngle(p0, p1, p2):
 
 def getNormalisedCoordinates(x, y, brightest_index, second_brightest_index, lines=[]):
 
+	x = copy.deepcopy(x)
+	y = copy.deepcopy(y)
+
 	lines = np.array(lines)
 	
 	for line in lines:
 		for x1,y1,x2,y2 in line:
-			x1-= x[brightest_index]
+			x1 -= x[brightest_index]
 			y1 -= y[brightest_index]
 			x2 -= x[brightest_index]
 			y2 -= y[brightest_index]
@@ -110,8 +114,9 @@ def iterateArea(contours, lines=[], iterate=False):
 	else:
 		for i in range(count):
 			for j in range(i+1, count):
-				x, y, _ = getNormalisedCoordinates(x[i:], y[i:], i, j, lines)
-			coordinates_list.append((x, y))
+				x_new, y_new, _ = getNormalisedCoordinates(x[i:], y[i:], i, j, lines)
+				coordinates_list.append((x_new, y_new))
+
 		return coordinates_list
 
 # Finding edges using Canny edge detection
@@ -320,6 +325,11 @@ def test_normaliser(test_path):
 	# plt.show()
 
 	return coordinates_list
+	# x, y, _ = iterateArea(final_contours)
+	# plt.figure("Normalised stars")
+	# plt.scatter(x, y)
+	# plt.show()
+	# return [(x, y)]
 
 def score(x , y , template_x , template_y) :
 	test_coordinates = {}
@@ -389,9 +399,8 @@ def simillarity_error(train ,test):
 	return count , error
 
 def test_runner(constellation) : 
-	constellation = 'Andromeda'
+	# constellation = 'Andromeda'
 	test_coordinates = test_normaliser('test_data/' + constellation + '.png')
-	print(test_coordinates)
 	# print(len(test_coordinates) , test_coordinates)
 
 	file = open('Template Coordinates' , 'rb')
@@ -407,7 +416,7 @@ def test_runner(constellation) :
 			e = simillarity_error((x_template, y_template) , test_coordinates[bright_perm])
 			# score(x_test , y_test , x_template , y_template)
 			cur_score = e[0] * (e[0]-2) / (n_stars * e[1])
-			# print(constellation , e , n_stars , cur_score , e[1] / (e[0]-2))
+			print(constellation , e , n_stars , cur_score , e[1] / (e[0]-2))
 
 			if e[0] > 2 and score < cur_score :
 				pred_label = constellation
@@ -416,12 +425,14 @@ def test_runner(constellation) :
 	# # plt.figure('Template')
 	# plt.scatter(x_template, y_template)
 	# plt.show()
-	# print('--------------------'*2 , '\n' , pred_label)
+	print('--------------------'*2 , '\n' , pred_label)
 	return pred_label
 
 
 if __name__ == "__main__":
 	d = ['Andromeda' , 'Aquila' , 'Capricornus' , 'Cetus' , 'Gemini' , 'Grus' , 'Pavo' , 'Pegasus' , 'Phoenix' , 'Pisces' , 'PiscisAustrinus' , 'Puppis' , 'UrsaMajor' , 'UrsaMinor' , 'Vela']
-	for i in d :
-		if (test_runner(i) == i) :
-			print(i)
+	# for i in d :
+	# 	if (test_runner(i) == i) :
+	# 		print(i)
+	test_runner(d[4])
+
