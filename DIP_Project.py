@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import math
+import os
+import pickle
 
 def dist(p1, p2):
 	return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
@@ -104,50 +106,79 @@ def getRedChannel(img):
 	image_copy[:, :, 0] = 0
 	return image_copy
 	
-def dodo():        
-	# Reading the template 
-	img = cv2.imread("Gemini.png")
-	cv2.imshow('original' ,img)
-	red_channel = getRedChannel(img)
-	plotImage(red_channel, "red")
-	thresh = binariseImage(red_channel, [165.75, 191.25])
+def makeTemplates():        
 
-	# Subtracting to get only stars
-	final = thresh[0] - thresh[1]
-	plotImage(final, "final")
+	# Directory where the templates are stoed
+	template_directory = "./Templates"
+	templates_coordinates = {}
 
-	stars = applyMedian(final, 3)
-	plotImage(stars, "stars")
+	# Iterate through each file in the template directory to process one template at a time
+	for filename in os.listdir(template_directory):
+		print(filename)
 
-	stars_grey = getGrayscale(stars)
-	final_stars = binariseImage(stars_grey, [20])
-	final_stars_inverted = invertImage(final_stars[0])
-	plotImage(final_stars[0], "final stars")
+		# Reading the template 
+		img = cv2.imread("./Templates/" + filename)
+		# cv2.imshow('original' ,img)
+		red_channel = getRedChannel(img)
+		# plotImage(red_channel, "red")
+		thresh = binariseImage(red_channel, [165.75, 191.25])
 
-	edged = findEdges(final_stars_inverted, 30, 200)
-	plotImage(edged, "edges")
-	cv2.waitKey(0)  
+		# Subtracting to get only stars
+		final = thresh[0] - thresh[1]
+		# plotImage(final, "final")
 
-	# Finding the contours in the image
-	edge_copy = edged.copy()
-	contours, hierarchy = cv2.findContours(edge_copy, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE) 
+		stars = applyMedian(final, 3)
+		# plotImage(stars, "stars")
 
-	print("Number of Contours found = " + str(len(contours)))
-	# cv2.drawContours(img, contours, -1, (0, 255, 0), 3) 
-	# cv2.imshow('Contours', img) 
-	# cv2.waitKey(0) 
-	# cv2.destroyAllWindows()
+		stars_grey = getGrayscale(stars)
+		final_stars = binariseImage(stars_grey, [20])
+		final_stars_inverted = invertImage(final_stars[0])
+		# plotImage(final_stars[0], "final stars")
 
-	x, y = getNormalisedCoordinates(contours)
+		edged = findEdges(final_stars_inverted, 30, 200)
+		# plotImage(edged, "edges")
+		# cv2.waitKey(0)  
 
-	return x, y
+		# Finding the contours in the image
+		edge_copy = edged.copy()
+		contours, hierarchy = cv2.findContours(edge_copy, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE) 
 
-	plt.figure("Normalised stars")
-	plt.scatter(x, y)
-	plt.show()
+		final_contours = []
+		for contour in contours:
+			area = cv2.contourArea(contour)
+			if area != 0:
+				final_contours.append(contour)
+
+		print("Number of Contours found = " + str(len(final_contours)))
+		# cv2.drawContours(img, contours, -1, (0, 255, 0), 3) 
+		# cv2.imshow('Contours', img) 
+		# cv2.waitKey(0) 
+		# cv2.destroyAllWindows()
+
+		x, y = getNormalisedCoordinates(final_contours)
+
+		templates_coordinates[filename[:-4]] = (x, y)
+
+		# Plot the normalised stars or save them
+		# plt.figure("Normalised" + filename[:-4] + "stars")
+		# plt.scatter(x, y)
+		# plt.savefig("./Normalised_Templates/" + filename)
+		# plt.close()
+
+		# Return the normalised coordinates 
+		# return x, y
+	
+	# Save the normalised coordinates for all templates
+	# with open("Template Coordinates", "wb") as fp:
+	# 	pickle.dump(templates_coordinates, fp)
+	
 
 
 if __name__ == "__main__":
+
+	# Process and find the normalised coordinate for each template present in the Templates directory
+	# makeTemplates()
+
 	img = cv2.imread("test.png")
 	img = getGrayscale(img)
 	cv2.imshow('test_img' ,img)
@@ -183,9 +214,9 @@ if __name__ == "__main__":
 
 	x, y = getNormalisedCoordinates(final_contours)
 
-	# plt.figure("Normalised stars")
-	# plt.scatter(x, y)
-	# plt.show()
+	plt.figure("Normalised stars")
+	plt.scatter(x, y)
+	plt.show()
 
 	template_x, template_y = dodo()
 
