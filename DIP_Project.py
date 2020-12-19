@@ -421,27 +421,28 @@ def test_runner(constellation) :
 				pred_label = constellation
 				score = cur_score
 
-				plt.figure('Matched'+constellation)
-				plt.scatter(x_template, y_template)
-				plt.scatter(test_coordinates[bright_perm][0], test_coordinates[bright_perm][1])
-				for line in normalised_lines:
-					for x1,y1,x2,y2 in line:
-						plt.plot([x1, x2], [y1, y2], color='red')
-				plt.show()
+				# plt.figure('Matched'+constellation)
+				# plt.scatter(x_template, y_template)
+				# plt.scatter(test_coordinates[bright_perm][0], test_coordinates[bright_perm][1])
+				# for line in normalised_lines:
+				# 	for x1,y1,x2,y2 in line:
+				# 		plt.plot([x1, x2], [y1, y2], color='red')
+				# plt.show()
 	# print('--------------------'*2 , '\n' , score , pred_label)
 	return pred_label
 
 
 if __name__ == "__main__":
 	# makeTemplates()
-	d = ['Andromeda' , 'Aquila' , 'Capricornus' , 'Cetus' , 'Gemini' , 'Grus' , 'Pavo' , 'Pegasus' , 'Phoenix' , 'Pisces' , 'PiscisAustrinus' , 'Puppis' , 'UrsaMajor' , 'UrsaMinor' , 'Vela']
-	# count = 0
-	# for i in d :
-	# 	pred = test_runner(i)
-	# 	if (pred == i) :
-	# 		count += 1
-	# 	else :
-	# 		print(i , pred)
-	# print(count)
-	test_runner(d[-2])
+	d = ['Andromeda' , 'Aquila' , 'Auriga' , 'CanisMajor' , 'Capricornus' , 'Cetus' , 'Columba' , 'Gemini' , 'Grus' , 'Leo' , 'Orion' , 'Pavo' , 'Pegasus' , 'Phoenix' , 'Pisces' , 'PiscisAustrinus' , 'Puppis' , 'UrsaMajor' , 'UrsaMinor' , 'Vela']
+	count = 0
+	for i in d :
+		pred = test_runner(i)
+		if (pred == i) :
+			count += 1
+		else :
+			print(i , pred)
+	print(count / len(d))
+
+	# test_runner('t')
 
