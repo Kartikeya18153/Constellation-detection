@@ -181,7 +181,7 @@ def makeTemplates():
 	# Iterate through each file in the template directory to process one template at a time
 	for filename in os.listdir(template_directory):
 	# for filename in ["Hercules.png"]:
-		print(filename)
+		# print(filename)
 
 		# Reading the template 
 		img = cv2.imread("./Templates/" + filename)
@@ -249,7 +249,7 @@ def makeTemplates():
 			if area != 0:
 				final_contours.append(contour)
 		
-		print("Number of Contours found = " + str(len(final_contours)))
+		# print("Number of Contours found = " + str(len(final_contours)))
 		# cv2.drawContours(img, contours, -1, (0, 255, 0), 3) 
 		# cv2.imshow('Contours', img) 
 		# cv2.waitKey(0) 
@@ -352,11 +352,11 @@ def score(x , y , template_x , template_y) :
 		sorted_template_x.append(i)
 		sorted_template_y.append(template_coordinates[i])
 	
-	print(sorted_template_x)
-	print(sorted_template_y)
-	print("test")
-	print(sorted_x)
-	print(sorted_y)
+	# print(sorted_template_x)
+	# print(sorted_template_y)
+	# print("test")
+	# print(sorted_x)
+	# print(sorted_y)
 	
 	index_test = 0
 	index_template = 0
@@ -377,8 +377,8 @@ def score(x , y , template_x , template_y) :
 			index_template += 1
 
 		index_test += 1
-	print(count)
-	print(matched_coord)
+	# print(count)
+	# print(matched_coord)
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
@@ -397,15 +397,17 @@ def simillarity_error(train ,test):
 	return count , error
 
 def test_runner(constellation) : 
-	# constellation = 'Andromeda'
 	test_coordinates = test_normaliser('test_data/' + constellation + '.png')
-	print(len(test_coordinates))
+	true_label = constellation[:]
+	# print(len(test_coordinates))
 
 	file = open('Template Coordinates' , 'rb')
 	template_coordinate = pickle.load(file)
 
 	score = -1
 	pred_label = 'None'
+
+	plot_points = []
 
 	for bright_perm in range(len(test_coordinates)) :
 		for constellation in template_coordinate :
@@ -421,25 +423,23 @@ def test_runner(constellation) :
 				pred_label = constellation
 				score = cur_score
 
-				# plt.figure('Matched'+constellation)
-				# plt.scatter(x_template, y_template)
-				# plt.scatter(test_coordinates[bright_perm][0], test_coordinates[bright_perm][1])
-				# for line in normalised_lines:
-				# 	for x1,y1,x2,y2 in line:
-				# 		plt.plot([x1, x2], [y1, y2], color='red')
-				# plt.show()
+
+				plot_points = (x_template, y_template, test_coordinates, normalised_lines)
+
+	plt.figure('Matched ' + true_label + " " + pred_label	)
+	plt.scatter(plot_points[0], plot_points[1])
+	plt.scatter(plot_points[2][bright_perm][0], plot_points[2][bright_perm][1])
+	for line in plot_points[3]:
+		for x1,y1,x2,y2 in line:
+			plt.plot([x1, x2], [y1, y2], color='red')
+	plt.savefig("./Predicted_images/" + true_label + " " + pred_label)
+	plt.close()
+		
 	# print('--------------------'*2 , '\n' , score , pred_label)
 	return pred_label
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
-	d = ['Andromeda' , 'Aquila' , 'Capricornus' , 'Cetus' , 'Gemini' , 'Grus' , 'Pavo' , 'Pegasus' , 'Phoenix' , 'Pisces' , 'PiscisAustrinus' , 'Puppis' , 'UrsaMajor' , 'UrsaMinor' , 'Vela']
-	# for i in d :
-	# 	if (test_runner(i) == i) :
-	# 		print(i)
-	test_runner(d[4])
-=======
 	# makeTemplates()
 	d = ['Andromeda' , 'Aquila' , 'Auriga' , 'CanisMajor' , 'Capricornus' , 'Cetus' , 'Columba' , 'Gemini' , 'Grus' , 'Leo' , 'Orion' , 'Pavo' , 'Pegasus' , 'Phoenix' , 'Pisces' , 'PiscisAustrinus' , 'Puppis' , 'UrsaMajor' , 'UrsaMinor' , 'Vela']
 	count = 0
@@ -450,7 +450,6 @@ if __name__ == "__main__":
 		else :
 			print(i , pred)
 	print(count / len(d))
-
+	cv2.waitKey(0)
 	# test_runner('t')
 
->>>>>>> 60f5e83dcc3a79e275a348fc16161e397a5093e6
