@@ -100,7 +100,7 @@ def iterateArea(contours, lines=[], iterate=False):
 		x.append(coordinates[area][0])
 		y.append(coordinates[area][1])
 
-	threshold = 130
+	threshold = min(150 , sorted_area[2])
 	# print(sorted_area)
 	count = 0
 	for area in sorted_area:
@@ -257,7 +257,7 @@ def makeTemplates():
 
 		x, y, normalised_lines = iterateArea(final_contours, drawn_lines)
 
-		templates_coordinates[filename[:-4]] = (x, y, len(final_contours))
+		templates_coordinates[filename[:-4]] = (x, y, len(final_contours) , normalised_lines)
 
 		# Plot the normalised stars or save them
 		plt.figure("Normalised " + filename[:-4] + " stars")
@@ -269,7 +269,6 @@ def makeTemplates():
 		# plt.savefig("./Normalised_Templates/" + filename)
 		# plt.close()
 		# plt.show()
-		# exit()
 
 		# Return the normalised coordinates 
 		# return x, y
@@ -314,11 +313,10 @@ def test_normaliser(test_path):
 		if area != 0:
 			final_contours.append(contour)
 
-	print("Number of Contours found = " + str(len(final_contours)))
+	# print("Number of Contours found = " + str(len(final_contours)))
 
 	coordinates_list = iterateArea(final_contours, [] , True)
 	# print(coordinates_list)
-	# exit()
 
 	# plt.figure("Normalised stars")
 	# plt.scatter(x, y)
@@ -386,7 +384,7 @@ def score(x , y , template_x , template_y) :
 	cv2.destroyAllWindows()
 
 def simillarity_error(train ,test):
-	threshold = 0.05
+	threshold = 0.05 * 1
 	error = 1e-100
 	count = 0
 	for i in range(train[0].shape[0]) :
@@ -401,7 +399,7 @@ def simillarity_error(train ,test):
 def test_runner(constellation) : 
 	# constellation = 'Andromeda'
 	test_coordinates = test_normaliser('test_data/' + constellation + '.png')
-	# print(len(test_coordinates) , test_coordinates)
+	print(len(test_coordinates))
 
 	file = open('Template Coordinates' , 'rb')
 	template_coordinate = pickle.load(file)
@@ -411,27 +409,48 @@ def test_runner(constellation) :
 
 	for bright_perm in range(len(test_coordinates)) :
 		for constellation in template_coordinate :
-			x_template , y_template , n_stars = template_coordinate[constellation]
+			x_template , y_template , n_stars , normalised_lines = template_coordinate[constellation]
 
 			e = simillarity_error((x_template, y_template) , test_coordinates[bright_perm])
 			# score(x_test , y_test , x_template , y_template)
 			cur_score = e[0] * (e[0]-2) / (n_stars * e[1])
-			print(constellation , e , n_stars , cur_score , e[1] / (e[0]-2))
+			# cur_score = np.exp(e[0] / n_stars) * (e[0]-2) / e[1]
+			# print(constellation , e , n_stars , cur_score)
 
-			if e[0] > 2 and score < cur_score :
+			if e[0] > 2 and score < cur_score < 1e+3 :
 				pred_label = constellation
 				score = cur_score
 
-	# # plt.figure('Template')
-	# plt.scatter(x_template, y_template)
-	# plt.show()
-	print('--------------------'*2 , '\n' , pred_label)
+				# plt.figure('Matched'+constellation)
+				# plt.scatter(x_template, y_template)
+				# plt.scatter(test_coordinates[bright_perm][0], test_coordinates[bright_perm][1])
+				# for line in normalised_lines:
+				# 	for x1,y1,x2,y2 in line:
+				# 		plt.plot([x1, x2], [y1, y2], color='red')
+				# plt.show()
+	# print('--------------------'*2 , '\n' , score , pred_label)
 	return pred_label
 
 
 if __name__ == "__main__":
+<<<<<<< HEAD
 	d = ['Andromeda' , 'Aquila' , 'Capricornus' , 'Cetus' , 'Gemini' , 'Grus' , 'Pavo' , 'Pegasus' , 'Phoenix' , 'Pisces' , 'PiscisAustrinus' , 'Puppis' , 'UrsaMajor' , 'UrsaMinor' , 'Vela']
 	# for i in d :
 	# 	if (test_runner(i) == i) :
 	# 		print(i)
 	test_runner(d[4])
+=======
+	# makeTemplates()
+	d = ['Andromeda' , 'Aquila' , 'Auriga' , 'CanisMajor' , 'Capricornus' , 'Cetus' , 'Columba' , 'Gemini' , 'Grus' , 'Leo' , 'Orion' , 'Pavo' , 'Pegasus' , 'Phoenix' , 'Pisces' , 'PiscisAustrinus' , 'Puppis' , 'UrsaMajor' , 'UrsaMinor' , 'Vela']
+	count = 0
+	for i in d :
+		pred = test_runner(i)
+		if (pred == i) :
+			count += 1
+		else :
+			print(i , pred)
+	print(count / len(d))
+
+	# test_runner('t')
+
+>>>>>>> 60f5e83dcc3a79e275a348fc16161e397a5093e6
